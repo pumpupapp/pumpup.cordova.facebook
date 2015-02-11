@@ -501,6 +501,8 @@
     
     NSString *graphPath = [command argumentAtIndex:0];
     NSArray *permissionsNeeded = [command argumentAtIndex:1];
+    NSString *graphMethod = nil;
+    NSDictionary *graphParams = nil;
     
     // We will store here the missing permissions that we will have to request
     NSMutableArray *requestPermissions = [[NSMutableArray alloc] initWithArray:@[]];
@@ -513,6 +515,16 @@
         }
     }
     
+    // If we have a method, update the value
+    if ([command argumentAtIndex:2] != (id)[NSNull null]) {
+        graphMethod = [command argumentAtIndex:2];
+    }
+    
+    // If we have params, update the value
+    if ([command argumentAtIndex:3] != (id)[NSNull null]) {
+        graphParams = [command argumentAtIndex:3];
+    }
+    
     // If we have permissions to request
     if ([requestPermissions count] > 0){
         // Ask for the missing permissions
@@ -523,7 +535,7 @@
                  // Permission granted
                  NSLog(@"new permissions %@", [FBSession.activeSession permissions]);
                  // We can request the user information
-                 [self makeGraphCall:graphPath];
+                 [self makeGraphCall:graphPath method:graphMethod params:graphParams];
              } else {
                  // An error occurred, we need to handle the error
                  // See: https://developers.facebook.com/docs/ios/errors
@@ -532,23 +544,28 @@
     } else {
         // Permissions are present
         // We can request the user information
-        [self makeGraphCall:graphPath];
+        [self makeGraphCall:graphPath method:graphMethod params:graphParams];
     }
 }
 
-- (void) makeGraphCall:(NSString *)graphPath
+- (void) makeGraphCall:(NSString *)graphPath method:(NSString *)method params:(NSDictionary *)params
 {
     
     NSLog(@"Graph Path = %@", graphPath);
+    NSLog(@"Graph Params = %@", params);
+    NSLog(@"Graph Method = %@", method);
     [FBRequestConnection
      startWithGraphPath: graphPath
+     parameters: params
+     HTTPMethod: method
      completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
          CDVPluginResult* pluginResult = nil;
          if (!error) {
+             NSLog(@"Result is %@", result);
              NSDictionary *response = (NSDictionary *) result;
-             
              pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:response];
          } else {
+             NSLog(@"Error is %@", error);
              pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
                                               messageAsString:[error localizedDescription]];
          }
