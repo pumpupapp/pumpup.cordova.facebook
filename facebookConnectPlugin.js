@@ -48,7 +48,7 @@ if (cordova.platformId == "browser") {
             if (!options.picture) {
                 options.picture = "";
             }
-            
+
             // Try will catch errors when SDK has not been init
             try {
                 FB.ui(options,
@@ -74,7 +74,7 @@ if (cordova.platformId == "browser") {
             if (permissions && permissions.length > 0) {
                 permissionObj.scope = permissions.toString();
             }
-            
+
             FB.login(function (response) {
                 if (response.authResponse) {
                     s(response);
@@ -122,12 +122,12 @@ if (cordova.platformId == "browser") {
             }
         },
 
-        api: function (graphPath, permissions, s, f) {
+        api: function (graphPath, permissions, graphMethod, graphParams, s, f) {
             // JS API does not take additional permissions
-            
+
             // Try will catch errors when SDK has not been init
             try {
-                FB.api(graphPath, function (response) {
+                FB.api(graphPath, graphMethod, graphParams, function (response) {
                     if (response.error) {
                         f(response);
                     } else {
@@ -156,7 +156,7 @@ if (cordova.platformId == "browser") {
             });
         }
     };
-    
+
     // Bake in the JS SDK
     (function () {
         if (!window.FB) {
@@ -219,9 +219,9 @@ if (cordova.platformId == "browser") {
             exec(s, f, "FacebookConnectPlugin", "logout", []);
         },
 
-        api: function (graphPath, permissions, s, f) {
+        api: function (graphPath, permissions, graphMethod, graphParams, s, f) {
             if (!permissions) { permissions = []; }
-            exec(s, f, "FacebookConnectPlugin", "graphApi", [graphPath, permissions]);
+            exec(s, f, "FacebookConnectPlugin", "graphApi", [graphPath, permissions, graphMethod, graphParams]);
         }
     };
 
