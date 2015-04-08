@@ -32,6 +32,7 @@ import com.facebook.FacebookOperationCanceledException;
 import com.facebook.FacebookAuthorizationException;
 import com.facebook.FacebookRequestError;
 import com.facebook.FacebookServiceException;
+import com.facebook.HttpMethod;
 import com.facebook.Request;
 import com.facebook.Request.GraphUserCallback;
 import com.facebook.Response;
@@ -67,6 +68,8 @@ public class ConnectPlugin extends CordovaPlugin {
     private Bundle paramBundle;
     private String method;
     private String graphPath;
+    private HttpMethod graphHttpMethod;
+    private Bundle graphParams;
     private String userID;
     private UiLifecycleHelper uiHelper;
     private boolean trackingPendingCall = false;
@@ -506,6 +509,23 @@ public class ConnectPlugin extends CordovaPlugin {
             graphContext.sendPluginResult(pr);
 
             graphPath = args.getString(0);
+            graphHttpMethod = args.getString(2).toLowerCase().equals("post") ? HttpMethod.POST : HttpMethod.GET;
+
+            graphParams = new Bundle();
+            if (!args.isNull(3)) {
+                JSONObject jsonObject = args.getJSONObject(3);
+                final Iterator<String> keys = jsonObject.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    Object value = jsonObject.get(key);
+                    if (value instanceof Boolean) {
+                        graphParams.putBoolean(key, ((Boolean) value).booleanValue());
+                    }
+                    else {
+                        graphParams.putString(key, value.toString());
+                    }
+                }
+            }
 
             JSONArray arr = args.getJSONArray(1);
 
@@ -641,6 +661,8 @@ public class ConnectPlugin extends CordovaPlugin {
                     }
                     graphPath = null;
                     graphContext = null;
+                    graphHttpMethod = null;
+                    graphParams = null;
                 }
             }
         };
@@ -654,7 +676,7 @@ public class ConnectPlugin extends CordovaPlugin {
 
         String[] urlParts = graphPath.split("\\?");
         String graphAction = urlParts[0];
-        Request graphRequest = Request.newGraphPathRequest(null, graphAction, graphCallback);
+        Request graphRequest = new Request(session, graphAction, graphParams, graphHttpMethod, graphCallback);
         Bundle params = graphRequest.getParameters();
 
         if (urlParts.length > 1) {
